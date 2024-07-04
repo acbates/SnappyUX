@@ -1,30 +1,36 @@
 # Snappy UX
 
 ### A little backstory ( just skip it )...
-2003, working for a small software company, an idea was had which would
-allow us to create UI's in a fashion similar to how we wrote Java Swing applications;
-each thing on screen had a box, and block of code responsible for that block. These blocks
-were components. Components could have sub components. Components could be given data,
-and when data changed you tell the appropriate component to repaint itself.
+In 2003, while working for a small software company, an idea was born to create
+UIs in a manner similar to Java Swing applications. The concept was simple:
+each on-screen element had a box and a corresponding block of code. These
+blocks were components that could contain sub-components and receive data. When
+data changed, the appropriate component would repaint itself.
 
-This framework became "Snappee", what the industry would later call a
-Single-Page-Application framework. Before JQuery (the first framework most would know about),
-but also ahead of other innovators like Dojo and Prototype.
+This framework, dubbed "Snappee," was what the industry would later call a
+Single-Page-Application framework. I am certain I wasn't the first to make
+a JS framework in this way, but nothing was published at the time, predating
+well-known tools like JQuery, Dojo, and Prototype. Snappee was in production
+apps for over a decade until company dissolved.
 
-Snappee went through a few revisions (v3 had 4 revisions at least), but actively worked
-on through 2013 when the company dissolved due to reasons.
+In the decade since, JavaScript has improved dramatically, incorporating much
+of the syntactic sugar that once made Snappee unique. After exploring modern
+frameworks like Angular, React, and Vue—with their strengths and weaknesses—I
+found myself reminiscing about Snappee's speed and simplicity.
 
-Javascript itself has improved so much in the last decade, all the syntactic sugar is now
-part of JS as standard. After playing with all the toys of Angular, React and Vue, along
-with their hits and misses. I kept looking back at how fast and easy Snappee
-was all those years ago. Particularly now that some of the framework
-coders are rolling back all the virtual-DOMs and other overly complex rendering schemes.
+As some framework developers now move away from complex rendering schemes like
+virtual DOMs, I became curious about reimagining Snappee with modern
+JS. An easy development process requiring no compilation step, and its
+performance remained impressive even on older machines.
 
-Even on old machines of 2004, Snappee never had performance problems. Development wasn't
-a hassle, it didn't need a compilation step. I was curious about what it could be like to
-revisit and reimplement with modern JS.
+This is that rewrite, SnappyUX.
 
-This is that update, SnappyUX.
+
+### General Approach
+Modern tooling like IntelliJ can syntax highlight HTML in JS strings, and
+particularly in JS string literals. So let's just use string literals as
+the template engine, which can obviously take advantage of the full capability
+of JS itself.
 
 
 
