@@ -1,7 +1,7 @@
 # Snappy UX
 
 ### A little backstory ( just skip it )...
-2003, as a contractor for a bespoke software company, an idea was had which would
+2003, working for a small software company, an idea was had which would
 allow us to create UI's in a fashion similar to how we wrote Java Swing applications;
 each thing on screen had a box, and block of code responsible for that block. These blocks
 were components. Components could have sub components. Components could be given data,
