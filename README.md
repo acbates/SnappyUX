@@ -41,6 +41,10 @@ Only opinionated where it matters (component registration, etc), assume
 nothing else. It's just assembling strings, so assemble whatever strings
 you want.
 
+Need some material design?... use bootstrap css or whatever. There
+are absurd amounts of them out there, all cached on CDNs. Snappy should jive
+with whatever plays nice in a html page.
+
 
 ## Components
 The core of everything is giving an area of the UI to some code, keeping that
@@ -319,9 +323,9 @@ const otherInstance = new OtherComp();
 
 // anonymous component passing in the data...
 let html = `
-    ${ sux.inject(pieceOfData, secondData, (dx) => {
+    ${ sux.inject(pieceOfData, secondData, (dx) => `
        <div>Value of sompeProperty is: ${ dx.someProperty }</div>
-    }) }
+    `)}
 `;
 
 ```
@@ -334,9 +338,9 @@ the `'touchData()'` and `'replaceData()'` notifications explained below.
 
 
 ## Reacting to data changes
-Other framework do a whole pile of nonsense for getting reactivity. SnappyUX doesn't have
+Other frameworks do a whole pile of nonsense for getting reactivity. SnappyUX doesn't have
 that noise, but there's a simple way to tell the framework you care about a chunk of data
-and would like its magic to work when you update it...
+and would like to know when it's updated by something else...
 
 ```javascript
 const data = {
