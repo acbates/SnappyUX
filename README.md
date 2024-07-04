@@ -32,6 +32,14 @@ particularly in JS string literals. So let's just use string literals as
 the template engine, which can obviously take advantage of the full capability
 of JS itself.
 
+Super lightweight; minified file without compression is 7kb at the moment,
+3kb compressed.
+
+No compilation step, lazy loading of resources if you wish.
+
+Only opinionated where it matters (component registration, etc), assume
+nothing else. It's just assembling strings, so assemble whatever strings
+you want.
 
 
 ## Components
