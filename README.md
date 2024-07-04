@@ -42,8 +42,8 @@ nothing else. It's just assembling strings, so assemble whatever strings
 you want.
 
 Need some material design?... use bootstrap css or whatever. There
-are absurd amounts of them out there, all cached on CDNs. Snappy should jive
-with whatever plays nice in a html page.
+are absurd amounts of them out there, super pretty, all cached on CDNs. Snappy
+should jive with whatever plays nice in a html page.
 
 
 ## Components
