@@ -597,6 +597,19 @@ let helloComponent = {
 };
 ```
 
+### Removing an event handler
+Removing has a simple function to call. Components are removed whenever they're
+cleared.
+
+
+```javascript
+    sux.youDontSay('SomeEvent', someHandler);
+```
+
+
+
+
+
 ## Bundles & Routing
 We have cool components, but now we need to organise the source tree, and navigate in a way
 that involves the URL and browser history.
@@ -665,6 +678,24 @@ The framework will automatically check the hash value of the application, and wh
 it will run through the list of bundles to see if the route matches. With a bundle found,
 it will call the registered factory for the name of the bundle to create the component.
 
+We've already mentioned the `'Routing'` event, but here again for convenience...
+
+```javascript
+// in a component...
+let helloComponent = {
+    draw: () => {
+        return `<div> This is hello content </div>`;
+    },
+    whenRouting: () => {
+        console.log('child component was mounted!');
+    }
+};
+
+// or if you just wanted some random function handler...
+sux.when('Routing', (hash, route) => {
+    console.log('Route changed to:', route);
+});
+```
 
 
 ### 'routeChanged()' handler
