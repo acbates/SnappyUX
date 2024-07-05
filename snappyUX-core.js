@@ -4,7 +4,7 @@ const sux = ((_s) => {
     // COMPONENTS
     
     let compCounter = 1000;
-
+    
     let compMap = new Map(); // maps suxId to component
     let dataMap = new Map(); // maps data to components
     let drawMap = new Map(); // maps draw functions to their components
@@ -37,9 +37,9 @@ const sux = ((_s) => {
     _s.element = (c) => {
         if (!c) return;
         if (typeof c === 'string') c = compMap.get(c);
-  
+        
         if (c.element) return c.element;
-  
+        
         return (c.element = document.querySelector('[sux="' + c.suxId + '"]'));
     };
     
@@ -54,25 +54,25 @@ const sux = ((_s) => {
             return (c._jq = $(_s.element(c))); // eslint-disable-line no-undef
         }
     };
-
+    
     /**
      * Registers a component with the framework, including referencing its data, draw function, etc.
      */
     _s.register = (c) => {
         if (!c.suxId) c.suxId = _s.genId();
         if (compMap.has(c.suxId)) return;
-
+        
         compMap.set(c.suxId, c);
         drawMap.set(c.draw, c);
         
         // see if it has 'when' functions to register as event listeners...
         _s.when(c);
-
+        
         if (c.data?.length) {
             c.data.forEach(a => {
                 if (typeof a === 'object') { // not doing basic types (strings, booleans, ints, etc)
                     if (a instanceof Date) return; // also not doing Dates
-      
+                    
                     let comps = dataMap.get(a);
                     if (!comps) dataMap.set(a, (comps = [c])); // add the data to the map
                     else comps.push(c);
@@ -81,10 +81,10 @@ const sux = ((_s) => {
         } else {
             c.data = [];
         }
-
+        
         _s._createdDuringDraw.push(c);
     };
-
+    
     // Internal function that creates a component from common arguments passed to mount, inject, etc.
     // eg: draw function, data, if it's a component already, etc.
     const compFromArgs = (args) => {
@@ -95,14 +95,14 @@ const sux = ((_s) => {
             let f = args[i];
             // function, so mounting anonymously...
             args.splice(i, 1);
-  
+            
             // create a component object
             comp = {
                 suxId: _s.genId(),
                 draw: f,
                 data: args
             };
-  
+            
         } else {
             // no function, it's object/component already
             i = args.findIndex(a => typeof a === 'object' && a.draw);
@@ -129,9 +129,9 @@ const sux = ((_s) => {
             if (typeof element === 'string') element = document.getElementById(element);
         }
         if (!element) throw new Error('Element or id of element required to mount.');
-
+        
         let sux = element.getAttribute('sux');
-
+        
         if (sux) {
             _s.clearKids(element);
             let comp = compMap.get(sux);
@@ -140,19 +140,19 @@ const sux = ((_s) => {
                 _s.youDontSay(comp);
             }
         }
-
+        
         let comp = compFromArgs(args);
         comp.inny = true;
-
+        
         _s._createdDuringDraw = [comp];
         _s.register(comp);
         element.setAttribute('sux', comp.suxId);
         const result = element.innerHTML = comp.draw(...comp.data);
-
+        
         _s.settle();
         return result;
     };
-
+    
     /**
      * Specifically for anonymous components, injecting their creation and markup into some other markup.
      * This creates an "outy" component ( 'repaint()' updates outerHTML rather than innerHTML )
@@ -181,18 +181,18 @@ const sux = ((_s) => {
     _s.repaint = c => {
         if (!c) return;
         if (typeof c === 'string') c = compMap.get(c);
-
+        
         _s.clearKids(c);
-
+        
         const element = _s.element(c);
         if (element) {
             _s._createdDuringDraw = [];
-  
+            
             // redraw the html...
             let content = c.draw(...(c.data));
             
             if (c.outy) {
-            // inject the suxId...
+                // inject the suxId...
                 content = content.replace('>', ` sux="${c.suxId}">`);
                 // update the element...
                 element.outerHTML = content;
@@ -201,7 +201,7 @@ const sux = ((_s) => {
             } else {
                 element.innerHTML = content;
             }
-  
+            
             _s._createdDuringDraw.forEach(c => (c.mounted) ? c.mounted() : null);
             _s._createdDuringDraw = [];
         } else {
@@ -217,7 +217,7 @@ const sux = ((_s) => {
      */
     _s.touchData = (dat) => {
         if (typeof dat !== 'object' || dat instanceof Date) return; // not doing basic types or dates
-
+        
         let comps = dataMap.get(dat);
         if (comps) comps.forEach(c => {
             if (c.dataTouched) {
@@ -237,7 +237,7 @@ const sux = ((_s) => {
         if (typeof update !== 'object' || update instanceof Date) {
             throw new Error('Updating object to basic type is sadpanda.');
         }
-
+        
         let comps = dataMap.get(orig);
         if (comps) comps.forEach(c => {
             if (c.dataReplace) {
@@ -260,7 +260,7 @@ const sux = ((_s) => {
         if (!_s.isElement(cx)) {
             if (cx?.suxId) {
                 e = _s.element(cx);
-        
+                
             } else {
                 if (typeof cx !== 'string') cx = cx.suxId;
                 if (!cx) return;
@@ -274,16 +274,16 @@ const sux = ((_s) => {
         }
         
         let ksux = e.querySelectorAll('[sux]');
-
+        
         ksux.forEach(ex => {
             let id = ex.getAttribute('sux');
             let c = compMap.get(id);
             if (!c) return;
-  
+            
             compMap.delete(id);
             drawMap.delete(c.draw);
             _s.youDontSay(c);
-  
+            
             if (c.data?.length) {
                 c.data.forEach(d => {
                     let comps = dataMap.get(d);
@@ -293,7 +293,7 @@ const sux = ((_s) => {
                     }
                 });
             }
-  
+            
             if (c.cleared) c.cleared();
         });
     };
@@ -355,75 +355,7 @@ const sux = ((_s) => {
     
     
     // ------------------------------------------------------------------------------
-    // BUNDLING/RESOURCES AND ROUTING
-    
-    _s.bundles = {};
-    _s.loadPromises = {};
-    _s.factories = new Map();
-    _s.requestedResources = new Map();
-    
-    _s.routes = [];
-    _s.siteLoader = null;
-    
-    
-    /**
-     * Loads a javascript file into the document
-     */
-    _s.loadScript = (source) => {
-        let prom = _s.requestedResources.get(source);
-        if (prom) return prom;
-        
-        prom = new Promise((resolve) => {
-            let script = document.createElement('script');
-            
-            script.onload = () => setTimeout(() => resolve(), 50);
-            script.type = 'text/javascript';
-            
-            script.src = source;
-            document.head.appendChild(script);
-        });
-        
-        _s.requestedResources.set(source, prom);
-        
-        return prom;
-    };
-    
-    /**
-     * Loads a stylesheet into the document head.
-     */
-    _s.loadStylesheet = (href) => {
-        // if loaded, return, otherwise do the thing
-        if (_s.requestedResources.has(href))  return;
-        _s.requestedResources.set(href, Promise.resolve());
-    
-        // create the link and trigger the load
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = href;
-        document.head.appendChild(link);
-    };
-    
-    /**
-     * Loads a named bundle (previously provided to 'loadBundles()'), of source and style into the document.
-     */
-    _s._loadBundle = async (name) => {
-        let bundle = _s.bundles[name];
-        if (bundle.style) {
-            _s.loadStylesheet(bundle.style);
-        
-        }
-        let source = bundle.source;
-        if (!Array.isArray(source)) source = [source];
-        
-        // wait for all the loadings...
-        await Promise.allSettled(source.map(src => _s.loadScript(src)));
-        
-        if (!_s.factories.has(name)) {
-            throw new Error('Bundle did not register a factory.');
-        }
-        
-        return _s.factories.get(name);
-    };
+    // NAMED FACTORIES
     
     /**
      * Given the name of a component and a factory function (a function that creates an instance of a component),
@@ -444,7 +376,7 @@ const sux = ((_s) => {
      */
     _s.getFactory = async (...args) => {
         let name = args.shift();
-    
+        
         if (_s.factories.has(name)) {
             return _s.factories.get(name);
         } else {
@@ -458,84 +390,9 @@ const sux = ((_s) => {
     };
     
     
-    /**
-     * Loads a bundle configuration into the system. Bundles connect a name to source and style resources as well
-     * as a route to get there with a hash in the URL.
-     * example: {
-     *       home: {
-     *           route: /home/g,
-     *           source: "js/components/home.js"
-     *       },
-     *       dancers: {
-     *           route: /dancers/g,
-     *           source: "js/components/dancers.js",
-     *           style: "css/components/dancers.css"
-     *       },
-     * }
-     *
-     * NOTE: the system only loads a resource once. You could share a stylesheet or script between bundles
-     * and the system will only load it once.
-     */
-    _s.loadBundles = (bundles) => {
-        _s.bundles = bundles;
-        let bundleKeys = Object.keys(bundles);
-        bundleKeys.forEach(name => {
-            let b = bundles[name];
-            if (b?.route) {
-                b.name = name;
-                _s.routes.push(b);
-            }
-        });
-        if (!_s.siteLoader) {
-            _s.siteLoader = setTimeout(async () => {
-                for (let key of bundleKeys) {
-                    await _s._loadBundle(key);
-                }
-            }, 1000);
-        }
-    };
-    
-    /**
-     * Helper function for navigating to a hash in the current document location.
-     * NOTE: the '#' is added for you, sux.go('home') will navigate to '#home'.
-     */
-    _s.go = (hash) => {
-        document.location = ('#' + hash);
-    };
-    
-    /**
-     * Helper that wires up an 'onclick' event (like 'sux.onclick()'), but it just routes with a hash.
-     */
-    _s.onclickGo = (hash) => {
-        return _s.eventAttr('onclick', () => _s.go(hash));
-    };
-    
-    /**
-     * Does the actual routing, doesn't change the document location, just routes to the appropriate component.
-     * Can also be used to kick things off on document load.
-     */
-    _s.route = async (hash) => {
-        if (hash && (typeof hash === 'object') && hash.newURL) hash = window.location.hash;
-        if (!hash) hash = (window.location.hash || '#home') + '';
-        
-        if (hash[0] === '#') hash = hash.substring(1);
-        
-        let route = _s.routes.find(r => r.route.test(hash));
-        
-        // reset the 'lastIndex' of all the regexes so they can be used again
-        _s.routes.forEach(r => r.route.lastIndex = 0);
-        
-        if (!route) {
-            console.log('No route found for ' + hash + '!');
-            return;
-        }
-        _s.say('Routing', hash, route);
-    };
-    
-    
     // ------------------------------------------------------------------------------
     // EVENT HANDLING
-
+    
     let handlerMap = {};
     
     /**
@@ -576,123 +433,7 @@ const sux = ((_s) => {
     _s.onmouseover = (func) => _s.eventAttr('onmouseover', func);
     _s.onmouseout = (func) => _s.eventAttr('onmouseout', func);
     
-
-    // ------------------------------------------------------------------------------
-    // HTTP
     
-    
-    /**
-     * Helper function to make HTTP calls. Note that the "postOrParams" argument can be either an object for POST
-     * or, or the parameters of the object will become the queryString for a GET request.
-     *
-     * NOTE: any response that is not "ok" will require a catch() to handle the error.
-     */
-    _s.http = (url, method, postOrParams, headers) => {
-        return new Promise((resolve, reject) => {
-            const options = {
-                method,
-                headers: { 'Content-Type': 'application/json', ...(headers || {}) }
-            };
-        
-            if (method === 'POST') {
-                options.body = JSON.stringify(postOrParams || {});
-            
-            } else if (method === 'GET' && postOrParams) {
-            // create the query string from params, including the encoding...
-                let qs = Object.keys(postOrParams).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(postOrParams[k])).join('&');
-                url = (url.includes('?') ?  '&' : '?') + qs;
-            }
-        
-            fetch(url, options).then(async r => {
-                if (r.ok) {
-                    resolve(await r.json());
-                } else {
-                    reject(await r.json());
-                }
-            });
-        });
-    };
-    
-    /**
-     * Wrapper of the 'http()' function for POST requests.
-     */
-    _s.httpPost = async (hostPath, path, post, headers) => {
-        if (!hostPath.endsWith('/') && path) hostPath += '/';
-        let url = hostPath + ( path || '');
-        return _s.http(url, 'POST', post, headers);
-    };
-    
-    /**
-     * Wrapper of the 'http()' function for GET requests.
-     */
-    _s.httpGet = async (hostPath, path, params, headers) => {
-        if (!hostPath.endsWith('/') && path) hostPath += '/';
-        let url = hostPath + ( path || '');
-        return _s.http(url, 'GET', params, headers);
-    };
-    
-    /**
-     * So that you don't need the full URL in all the code, setting up an API makes the code cleaner.
-     * example: {
-     *    coreLambdaApi: {
-     *       hostPath: `https://somehost:8080/dev/core/`
-     *   },
-     *   otherLambda: {
-     *       hostPath: `https://otherhost:6548/dev/other/`
-     *   }
-     * }
-     *
-     * ...using the above will look like...
-     *     await sux.coreLambdaApi.post('healthCheck', { notThing: 'bad-request' }, {});
-     *
-     * ...path argument is appended to the hostPath. You _could_ put a querystring on that path
-     * argument, but it's nicer just the use the params argument object.
-     */
-    _s.setupApi = (config) => {
-        Object.keys(config).forEach(k => {
-            let conf = config[k];
-            if (!_s[k]) {
-                _s[k] = {
-                    post: async (path, post, headers) => sux.httpPost(conf.hostPath, path, post, headers),
-                    get: async (path, params, headers) => sux.httpGet(conf.hostPath, path, params, headers)
-                };
-            }
-        });
-    };
-    
-    /**
-     * Helper function for parsing querystrings, and if no string
-     * provided will do whatever is in the current URL.
-     */
-    _s.parseQstring = (query) => {
-        if (!query) {
-            let docLoc = (document.location + '').split('#')[0];
-            query = docLoc.split('?');
-            if (query.length === 1) return {};
-            query = query[1];
-        }
-    
-        const duri = (ux) => decodeURIComponent((ux + '').replace(/\+/g, '%20'));
-    
-        let params = query.split('&');
-        let result = {};
-        for (let i = 0; i < params.length; i++) {
-            let pair = params[i].split('=');
-            let key = duri(pair[0]);
-            let val = duri(pair[1] || '');
-            if (result[pair[0]]) {
-                if (Array.isArray(result[key])) {
-                    result[key].push(val);
-                } else {
-                    result[key] = [ result[key], val ];
-                }
-            } else {
-                result[key] = val;
-            }
-        }
-        return result;
-    };
-
     // ------------------------------------------------------------------------------
     // LISTENERS
     
@@ -712,8 +453,13 @@ const sux = ((_s) => {
         } else if (typeof evt === 'object') {
             let obj = evt;
             let handlerList = [];
+            
+            let keyList = null;
+            if (evt.constructor?.name === 'Object') keyList = Object.keys(evt);
+            else keyList = Object.getOwnPropertyNames(Object.getPrototypeOf(evt));
+            
             // turn "when * ()" into handlers...
-            Object.keys(obj).forEach(k => {
+            keyList?.forEach(k => {
                 if (k.length > 4 && k.startsWith('when')) {
                     let tmp = { k, h: (...args) => obj[k](...args) };
                     handlerList.push(tmp);
@@ -765,7 +511,8 @@ const sux = ((_s) => {
     // MISC UTILS
     
     /**
-     * Without changing the object reference, update the content of an object with that of another
+     * Without changing the object reference, update the content of an object with that of another.
+     * (generally Object.assign() but with a clearing of the original object first, with a `touchData()` call).
      */
     _s.bodySnatch = (obj, snatcher) => {
         // clear object...
@@ -774,24 +521,5 @@ const sux = ((_s) => {
         _s.touchData(obj);
     };
     
-    
-    // ------------------------------------------------------------------------------
-    // final setup...
-    
-    // listen for hash changes in the document location...
-    window.addEventListener('hashchange', _s.route);
-    
-    
     return _s;
 })({});
-
-/**
- * Helper class, that when extended lets you use 'this.repaint()'...
- * ...I'm still thinking it through as to if I care or not :)
- */
-class SuxProxy { // eslint-disable-line no-undef,no-unused-vars
-    repaint() { return sux.repaint(this); }
-    onclick(f) { return sux.onclick(f); }
-}
-
-new SuxProxy(); // just shutting up the linter...
