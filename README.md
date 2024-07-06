@@ -46,6 +46,10 @@ are absurd amounts of them out there, super pretty, all cached on CDNs. Snappy
 should jive with whatever plays nice in a html page.
 
 
+
+# Core
+`snappyUX-core.js`
+
 ## Components
 The core of everything is giving an area of the UI to some code, keeping that
 code close and easy to update.
@@ -264,6 +268,86 @@ equivalent to what is above...
 // and you could of course bury an arrow function if you wanted...
 <div ${ sux.onclick( () => console.log('I was clicked!!') ) }>
 ```
+
+## "Binding"
+You can think of binding as wanting to get data into the document, but also get the values back
+out of it. So for things like form elements we need to get data into elements by setting the value,
+as well as listen for change when the user does stuff...
+
+```javascript
+const dataRecord = { myDataProperty: 'This field has value!!' };
+
+const submitCLicked = () => {
+    console.log('Submit clicked!!');
+    console.log('Value of myDataProperty is:', dataRecord.myDataProperty);
+};
+
+let someComponent = {
+    draw: () => {
+        return `
+            <div>
+               <input type="text" name="name" required  ${ sux.bindValueChange(dataRecord, 'myDataProperty') } >
+               
+               <button ${ sux.onclick(() => submitCLicked()) }>Click It!!</button>
+            </div>
+        `;
+    }
+};
+```
+...in the above example, we're calling `'bindValueChange()'` and passing an object and a property
+to do the binding with. When the value changes, the `'onchange'` events updates that property
+on the object with the new value. Clicking the button will print the results.
+
+Checkbox?
+```javascript
+const dataRecord = { trueFalseProperty: true };
+
+const submitCLicked = () => {
+    console.log('Submit clicked!!');
+    console.log('Value of trueFalseProperty is:', dataRecord.trueFalseProperty);
+};
+
+let someComponent = {
+    draw: () => {
+        return `
+            <div>
+               <input type="checkbox" ${ sux.bindCheckedChange(dataRecord, 'trueFalseProperty') } />
+               
+               <button ${ sux.onclick(() => submitCLicked()) }>Click It!!</button>
+            </div>
+        `;
+    }
+};
+```
+
+Sometimes we need to transform the value we're storing into something else for the screen.
+For example, if we have "active" and "inactive" strings but want a checkbox. For this we
+can use 'to' and 'from' functions to marshal the value 'to' the screen/html and 'from'
+the screen/html.
+
+Updating the component above, we change the arguments to a param object...
+
+```javascript
+let someComponent = {
+    draw: () => {
+        return `
+            <div>
+               <input type="checkbox" ${ sux.bindCheckedChange({
+                    obj: dataRecord,
+                    prop: 'trueFalseProperty',
+                    to: (dataVal) => dataVal === 'active',
+                    from: (elementVal) => elementVal ? 'active' : 'inactive'
+               })}
+               />
+               
+               <button ${ sux.onclick(() => submitCLicked()) }>Click It!!</button>
+            </div>
+        `;
+    }
+};
+```
+The `to` function transforms the value from our record into true/false for the checkbox, and the
+`from` function transforms the true/false from the checkbox into 'active' or 'inactive' for our record.
 
 
 ## Repainting
@@ -607,8 +691,35 @@ cleared.
 ```
 
 
+### Named Factories
+Because we don't know what route the user will load, we need a way to build components by
+name/route. This is what factories do, and what the router makes use of.
+
+Bundles are named (`'home'` and `'users'` in the above example), and their source code
+needs to register factories/functions with the framework that will construct instances of
+their respective components.
+
+```javascript
+sux.registerFactory('home', () => new Home());
+```
+Now the user will match the regular expression for the `'home'` bundle, and call this
+factory to make an instance. This is done with the `getFactory()` function.
+
+```javascript
+const factory = await sux.getFactory('home');
+const homeCompInstance = factory();
+
+const otherComp = (await sux.getFactory('users'))(userData);
+```
+
+NOTE: the `getFactory()` function is asynchronous, so you need to await the call to make
+use of the factory. This is because the bundle that the factory is in may not be loaded.
+The framework will make sure the bundle source code is loaded before returning the factory.
 
 
+
+# Hash Routing
+`snappyUX-hashRouter.js`
 
 ## Bundles & Routing
 We have cool components, but now we need to organise the source tree, and navigate in a way
@@ -647,33 +758,11 @@ back/forward of the browser, and has handy events to make use of.
 When the route changes, the framework will run through the list testing the regular expression
 against the hash value.
 
-### Registered Factories
-Because we don't know what route the user will load, we need a way to build components by
-name/route. This is what factories do, and what the router makes use of.
-
-Bundles are named (`'home'` and `'users'` in the above example), and their source code
-needs to register factories/functions with the framework that will construct instances of
-their respective components.
-
-```javascript
-sux.registerFactory('home', () => new Home());
-```
-Now the user will match the regular expression for the `'home'` bundle, and call this
-factory to make an instance. This is done with the `getFactory()` function.
-
-```javascript
-const factory = await sux.getFactory('home');
-const homeCompInstance = factory();
-
-const otherComp = (await sux.getFactory('users'))(userData);
-```
-
-NOTE: the `getFactory()` function is asynchronous, so you need to await the call to make
-use of the factory. This is because the bundle that the factory is in may not be loaded.
-The framework will make sure the bundle source code is loaded before returning the factory.
-
 
 ### Routing
+
+
+
 The framework will automatically check the hash value of the application, and when it changes
 it will run through the list of bundles to see if the route matches. With a bundle found,
 it will call the registered factory for the name of the bundle to create the component.
