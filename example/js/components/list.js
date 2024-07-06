@@ -70,8 +70,8 @@ class HomeComponent {
                             
                             <a style="color: #5d97aa; font-weight: bold; text-decoration: none !important; cursor: pointer !important"
                               ${ sux.onclick(() => {
-                                    let val = (window.prompt('Enter a new tag name:') + '') ;
-                                    if (val) {
+                                    let val = (window.prompt('Enter a new tag name:') + '').trim() ;
+                                    if (val && val !== 'null') {
                                         tags.push(val);
                                         sux.touchData(tags);
                                     }
@@ -102,8 +102,8 @@ class TagsManager {
     }
     
     addTag() {
-        let val = (window.prompt('Enter a new tag name:') + '') ;
-        if (val) {
+        let val = (window.prompt('Enter a new tag name:') + '').trim() ;
+        if (val && val !== 'null') {
             this.tags.push(val);
             sux.touchData(this.tags);
         }
