@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Factual Theory Manager</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  <script src="https://kit.fontawesome.com/ae360af17e.js"></script>
+
+  <!-- SnappyUX -->
+  <script type="text/javascript" src="js/snappyUX-core.js"></script>
+  <script type="text/javascript" src="js/snappyUX-http.js"></script>
+  <script type="text/javascript" src="js/snappyUX-hashRouting.js"></script>
+
+
+  <!-- Static data load, and replace the framework http() function to provide the service tier -->
+  <script type="text/javascript" src="js/data/data.js"></script>
+  <script type="text/javascript" src="js/data/http-interruptor.js"></script>
+
+  <style>
+      body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          margin: 0;
+          padding: 20px;
+          max-width: 1000px;
+      }
+
+      h2 {
+          color: #247a13;
+      }
+
+      h1 {
+          color: #333;
+      }
+
+  </style>
+</head>
+<body>
+  <h1>Factual Theory Manager</h1>
+  <div style="border-bottom: 1px solid #5fb046"></div>
+  <br>
+  <div id="conspiracy-stage">
+    ...loading...
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+  <script type="text/javascript">
+
+      const bundleConfig = {
+          home: {
+              route: /home/g,
+              source: 'js/components/home.js',
+              style: 'css/components/home.css'
+          },
+          conspiracy: {
+              route: /conspiracy\/\d+/g,
+              source: 'js/components/details.js',
+              style: 'css/components/home.css'
+          }
+      };
+
+      const serviceApiConfig = {
+          conspiraciesApi: {
+              hostPath: `/conspireSvc/`
+          }
+      };
+
+      // set up the routing and the service API...
+      sux.loadBundles(bundleConfig);
+      sux.setupApi(serviceApiConfig);
+
+
+      // kick it off!!
+      (async () => {
+          let compSwapFactory = await sux.getFactory('route-triggered-swapper');
+
+          let swappingComp = await compSwapFactory({ routeNames: Object.keys(bundleConfig), loadingDraw: () => '<span>...loading...</span>' });
+
+          sux.mount(document.getElementById('conspiracy-stage'), swappingComp);
+
+          // ...kick off the first route from the URL
+          sux.route();
+      })();
+  </script>
+</body>
+</html>

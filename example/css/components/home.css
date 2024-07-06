@@ -1,0 +1,87 @@
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+}
+th {
+    background-color: #f2f2f2;
+}
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+.tag {
+    display: inline-block;
+    background-color: #e0e0e0;
+    padding: 2px 6px;
+    margin: 2px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+
+form {
+    background: #f4f4f4;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #6f9f69 !important;
+}
+label {
+    display: block;
+    margin: 10px 0 5px;
+}
+input[type="text"], input[type="date"], textarea {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    /*border: 1px solid #ddd;*/
+    border-radius: 4px;
+    border: 1px solid #6f9f69 !important;
+}
+input[type="number"] {
+    width: 60px;
+    border: 1px solid #6f9f69 !important;
+}
+textarea {
+    height: 100px;
+    border: 1px solid #6f9f69 !important;
+}
+button {
+    background-color: #506943;
+    color: #fff;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button.cancel {
+    background-color: #bfd4b4;
+    color: #405c36;
+}
+button:hover {
+    background: #444;
+}
+button.cancel:hover {
+    background: #9ba099;
+}
+.tag {
+    display: inline-block;
+    background-color: #e0e0e0;
+    padding: 2px 6px;
+    margin: 2px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+th {
+    border-bottom: 3px solid #6f9f69 !important;
+}
+
+label {
+    color: #3b6e34;
+    font-weight: bold;
+}
