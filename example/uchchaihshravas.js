@@ -206,8 +206,9 @@ process.rootState.handleHttp = async (req, res) => {
       basicRef = basicRef.split('?')[0];
       
       if (!fs.existsSync(STATIC_DIR + basicRef) || !basicRef.endsWith('.js')) {
+          // return process.rootState.handleHttp({ url: '/index.html', method: 'GET' }, res);
           res.writeHead(404, {'Content-Type': 'text/html'});
-          res.end('<h2>404 Not Found</h2><p>Have a nice day :)</p>');
+          res.end('<html><head><meta http-equiv="Refresh" content="0; URL=/"/></head></html>');
           return;
       }
       
