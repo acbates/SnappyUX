@@ -80,6 +80,4 @@
         });
     };
     
-    console.log('LOADED HTTP??');
-    
 })(sux || window.sux || {});

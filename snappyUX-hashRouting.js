@@ -281,7 +281,5 @@
     // listen for hash changes in the document location...
     window.addEventListener('hashchange', _s.route);
     
-    console.log('LOADED ROUTING??');
-    
 })(sux || window.sux || {});
 

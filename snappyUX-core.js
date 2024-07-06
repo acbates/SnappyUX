@@ -1,5 +1,30 @@
 
 const sux = ((_s) => {
+    
+    // find in array by function, and remove it from the array as you do...
+    Array.prototype.rip = function(fn) {
+        let found = [];
+        for (let i = this.length - 1; i >= 0; i--) {
+            if (fn(this[i])) {
+                found.push(this[i]);
+                this.splice(i, 1);
+            }
+        }
+        return found.reverse();
+    }
+    
+    // find One in array by function, and remove it from the array as you do...
+    Array.prototype.ripOne = function(fn) {
+        for (let i = this.length - 1; i >= 0; i--) {
+            if (fn(this[i])) {
+                let tmp = this[i];
+                this.splice(i, 1);
+                return tmp;
+            }
+        }
+        return null;
+    }
+    
     // ------------------------------------------------------------------------------
     // COMPONENTS
     
@@ -172,6 +197,7 @@ const sux = ((_s) => {
     _s.settle = () => {
         let tmp = [..._s._createdDuringDraw];
         _s._createdDuringDraw = [];
+        
         tmp.forEach(c => (c.mounted) ? c.mounted() : null);
     };
     
@@ -201,6 +227,8 @@ const sux = ((_s) => {
             } else {
                 element.innerHTML = content;
             }
+            
+            _s._runMounts(element);
             
             _s._createdDuringDraw.forEach(c => (c.mounted) ? c.mounted() : null);
             _s._createdDuringDraw = [];
@@ -272,6 +300,8 @@ const sux = ((_s) => {
             // maybe not mounted yet?... in which case, no kids to clear...
             return;
         }
+        
+        _s._clearMounts(e);
         
         let ksux = e.querySelectorAll('[sux]');
         
@@ -404,12 +434,12 @@ const sux = ((_s) => {
     _s.event = (func) => {
         let id = _s.genId();
         handlerMap[id] = func;
-        return 'sux._event(\'' + id + '\')';
+        return 'sux._event(\'' + id + '\', this, event)';
     };
     
     // Internal function that is used by user's triggering events in the document.
-    _s._event = (id) => {
-        handlerMap[id]();
+    _s._event = (id, e, evt) => {
+        handlerMap[id](e, evt);
     };
     
     /**
@@ -432,6 +462,100 @@ const sux = ((_s) => {
     _s.onsubmit = (func) => _s.eventAttr('onsubmit', func);
     _s.onmouseover = (func) => _s.eventAttr('onmouseover', func);
     _s.onmouseout = (func) => _s.eventAttr('onmouseout', func);
+    
+    
+    /**
+     * Draws into a tag the ability to run a function after the tag is mounted.
+     */
+    _s._mountRefs = {};
+    _s.mountFunc = (func) => {
+        let id = _s.genId();
+        _s._mountRefs[id] = func;
+        return ' sux_mref="' + id + '" ';
+    }
+    
+    // internal, gets any invocations of `mountFunc` and applies them to the elements
+    _s._runMounts = (e) => {
+        if (!e) e = document;
+        e.querySelectorAll('[sux_mref]').forEach(ex => {
+            let id = ex.getAttribute('sux_mref');
+            if (_s._mountRefs[id]) {
+                let func = _s._mountRefs[id];
+                delete _s._mountRefs[id];
+                ex.removeAttribute('sux_mref');
+                func(ex);
+            }
+        });
+    };
+    
+    // Internal, for clearing component html, we don't want to have ref's sitting around orphaned
+    _s._clearMounts = (e) => {
+        if (!e) return;
+        e.querySelectorAll('[sux_mref]').forEach(ex => {
+            let id = ex.getAttribute('sux_mref');
+            ex.removeAttribute('sux_mref');
+            delete _s._mountRefs[id];
+        });
+    };
+    
+    
+    /**
+     * "Binding" is a loose term that you want to set something against an element, and listen for various
+     * events on that element.
+     *
+     * event: an event you want to listen to, can also be an object mapping multiple events to 'from' functions
+     * draw: if you want to take over writing the string that's added to the tag (eg: ' checked ' for checkboxes)
+     * to: function that does stuff when the element is mounted (like setting value of an input field)
+     * from: event handler executed when the event is triggered
+     */
+    _s.bind = (params) => {
+        if (!params) return;
+        let { event, draw, to, from } = params;
+        
+        let mountString = draw ? draw() : _s.mountFunc(to);
+        let eventString = null;
+        if (typeof event === 'string') eventString = _s.eventAttr(event, from);
+        else if (typeof event === 'object') {
+            eventString = Object.keys(event).map(k => _s.eventAttr(k, event[k])).join(' ');
+        }
+        return mountString + eventString;
+    };
+    
+    // internal, helping parse arguments to bind functions below
+    const binderParams = (args) => {
+        return (args.length === 1) ? args[0] : {
+            prop: args.ripOne(v => (typeof v === 'string')),
+            obj: args.ripOne(v => (typeof v === 'object')),
+        };
+    }
+    
+    /**
+     * Binds an element's 'value' to the 'onchange' event handler (eg: text input field)
+     */
+    _s.bindValueChange = (...args) => {
+        if (!args) return;
+        let { prop, obj, to, from } = binderParams(args);
+        
+        return _s.bind({
+            event: { 'onchange': e => obj[prop] = (from ? from(e.value) : e.value) },
+            to: e => e.value = (to ? to(obj[prop]) : obj[prop]),
+        });
+    };
+    
+    /**
+     * Binds an element's 'checked' state to the 'onchange' event handler (eg: checkboxes)
+     */
+    _s.bindCheckedChange = (...args) => {
+        if (!args) return;
+        let { prop, obj, to, from } = binderParams(args);
+        
+        let val = to ? to(obj[prop]) : obj[prop];
+        return _s.bind({
+            event: 'onchange',
+            draw: () => (!!val ? ' checked ' : ''),
+            from: e => (obj[prop] = from ? from(e.checked) : e.checked)
+        });
+    };
     
     
     // ------------------------------------------------------------------------------
