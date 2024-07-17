@@ -125,6 +125,13 @@
     };
     
     /**
+     * Helper that goes to previous address in history
+     */
+    _s.onclickBack = () => {
+        return _s.eventAttr('onclick', () => history.back());
+    };
+    
+    /**
      * Does the actual routing, doesn't change the document location, just routes to the appropriate component.
      * Can also be used to kick things off on document load.
      */
@@ -258,7 +265,13 @@
                 super(conf);
                 this.factoryRunner = async () => {};
                 
-                this.showFunc = (comp) => comp?.routeChanged?.(this.newHashPath, this.newRoute);
+                this.showFunc = (comp) => {
+                    if (!comp._hasShown) {
+                        comp._hasShown = true;
+                    } else {
+                        comp?.routeChanged?.(this.newHashPath, this.newRoute);
+                    }
+                };
                 this.hideFunc = (comp) => comp?.routeHiding?.();
             }
             
