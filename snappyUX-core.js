@@ -11,7 +11,7 @@ const sux = ((_s) => {
             }
         }
         return found.reverse();
-    }
+    };
     
     // find One in array by function, and remove it from the array as you do...
     Array.prototype.ripOne = function(fn) {
@@ -23,7 +23,7 @@ const sux = ((_s) => {
             }
         }
         return null;
-    }
+    };
     
     // ------------------------------------------------------------------------------
     // COMPONENTS
@@ -232,6 +232,8 @@ const sux = ((_s) => {
             
             _s._createdDuringDraw.forEach(c => (c.mounted) ? c.mounted() : null);
             _s._createdDuringDraw = [];
+            
+            c.repainted?.();
         } else {
             console.log('Element not found for ' + c.suxId);
         }
@@ -472,7 +474,7 @@ const sux = ((_s) => {
         let id = _s.genId();
         _s._mountRefs[id] = func;
         return ' sux_mref="' + id + '" ';
-    }
+    };
     
     // internal, gets any invocations of `mountFunc` and applies them to the elements
     _s._runMounts = (e) => {
@@ -527,7 +529,7 @@ const sux = ((_s) => {
             prop: args.ripOne(v => (typeof v === 'string')),
             obj: args.ripOne(v => (typeof v === 'object')),
         };
-    }
+    };
     
     /**
      * Binds an element's 'value' to the 'onchange' event handler (eg: text input field)
@@ -538,7 +540,10 @@ const sux = ((_s) => {
         
         return _s.bind({
             event: { 'onchange': e => obj[prop] = (from ? from(e.value) : e.value) },
-            to: e => e.value = (to ? to(obj[prop]) : obj[prop]),
+            to: e => {
+                const val = obj[prop];
+                e.value = (to ? to(val) : (val === null || val === undefined) ? '' : val );
+            },
         });
     };
     
@@ -552,7 +557,7 @@ const sux = ((_s) => {
         let val = to ? to(obj[prop]) : obj[prop];
         return _s.bind({
             event: 'onchange',
-            draw: () => (!!val ? ' checked ' : ''),
+            draw: () => (val ? ' checked ' : ''),
             from: e => (obj[prop] = from ? from(e.checked) : e.checked)
         });
     };
