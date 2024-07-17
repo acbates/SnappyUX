@@ -7,30 +7,27 @@
      *
      * NOTE: any response that is not "ok" will require a catch() to handle the error.
      */
-    _s.http = (url, method, postOrParams, headers) => {
-        return new Promise((resolve, reject) => {
-            const options = {
-                method,
-                headers: { 'Content-Type': 'application/json', ...(headers || {}) }
-            };
-            
-            if (method === 'POST') {
-                options.body = JSON.stringify(postOrParams || {});
-                
-            } else if (method === 'GET' && postOrParams) {
-                // create the query string from params, including the encoding...
-                let qs = Object.keys(postOrParams).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(postOrParams[k])).join('&');
-                url = (url.includes('?') ?  '&' : '?') + qs;
+    _s.http = async (url, method, postOrParams, headers) => {
+        method = method.toUpperCase();
+        
+        const defaultHeaders = { 'Content-Type': 'application/json' };
+        const fetchOptions = { method, headers: { ...defaultHeaders, ...headers } };
+        
+        if (postOrParams) {
+            if (method === 'GET' && postOrParams) {
+                url = (url.includes('?') ?  '&' : '?') + new URLSearchParams(postOrParams).toString();
             }
             
-            fetch(url, options).then(async r => {
-                if (r.ok) {
-                    resolve(await r.json());
-                } else {
-                    reject(await r.json());
-                }
-            });
-        });
+            if (method === 'POST' && postOrParams) {
+                fetchOptions.body = JSON.stringify(postOrParams);
+            }
+        }
+        
+        const response = await fetch(url, fetchOptions);
+        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        return await response.json();
     };
     
     /**
