@@ -14,11 +14,9 @@
         const fetchOptions = { method, headers: { ...defaultHeaders, ...headers } };
         
         if (postOrParams) {
-            if (method === 'GET' && postOrParams) {
+            if (method === 'GET') {
                 url = (url.includes('?') ?  '&' : '?') + new URLSearchParams(postOrParams).toString();
-            }
-            
-            if (method === 'POST' && postOrParams) {
+            } else {
                 fetchOptions.body = JSON.stringify(postOrParams);
             }
         }
@@ -33,19 +31,32 @@
     /**
      * Wrapper of the 'http()' function for POST requests.
      */
-    _s.httpPost = async (hostPath, path, post, headers) => {
-        if (!hostPath.endsWith('/') && path) hostPath += '/';
-        let url = hostPath + ( path || '');
-        return _s.http(url, 'POST', post, headers);
-    };
+    _s.httpPost = async (...args) => _s.httpCall('POST', ...args);
     
     /**
      * Wrapper of the 'http()' function for GET requests.
      */
-    _s.httpGet = async (hostPath, path, params, headers) => {
+    _s.httpGet = async (...args) => _s.httpCall('GET', ...args);
+    
+    /**
+     * Wrapper of the 'http()' function for all types of requests, passing in a method.
+     */
+    _s.httpCall = async (method, hostPath, path, params, headers, preflight = (obj => obj)) => {
+        let tmp = preflight({ method, hostPath, path, params, headers });
+        
+        if (tmp && tmp instanceof Promise) tmp = await tmp;
+        
+        if (tmp) {
+            method = tmp.method;
+            hostPath = tmp.hostPath;
+            path = tmp.path;
+            params = tmp.params;
+            headers = tmp.headers;
+        }
+        
         if (!hostPath.endsWith('/') && path) hostPath += '/';
         let url = hostPath + ( path || '');
-        return _s.http(url, 'GET', params, headers);
+        return _s.http(url, method, params, headers);
     };
     
     /**
@@ -70,8 +81,9 @@
             let conf = config[k];
             if (!_s[k]) {
                 _s[k] = {
-                    post: async (path, post, headers) => sux.httpPost(conf.hostPath, path, post, headers),
-                    get: async (path, params, headers) => sux.httpGet(conf.hostPath, path, params, headers)
+                    get: async (path, params, headers) => sux.httpCall('GET', conf.hostPath, path, params, headers, conf.preflight),
+                    post: async (path, post, headers) => sux.httpCall('POST', conf.hostPath, path, post, headers, conf.preflight),
+                    call: async (method, path, post, headers) => sux.httpCall(method, conf.hostPath, path, post, headers, conf.preflight)
                 };
             }
         });

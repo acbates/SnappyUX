@@ -25,6 +25,22 @@ const sux = ((_s) => {
         return null;
     };
     
+    // want an easy way to append HTML to an element...
+    HTMLElement.prototype.htmlChildAppend = function(html){
+        let tmp = document.createElement('span');
+        this.appendChild(tmp);
+        tmp.outerHTML = html;
+        sux._runMounts(this);
+    };
+    
+    // want an easy way to append HTML to an element...
+    HTMLElement.prototype.htmlChildBefore = function(html, kid){
+        let tmp = document.createElement('span');
+        this.insertBefore(tmp, kid);
+        tmp.outerHTML = html;
+        sux._runMounts(this);
+    };
+    
     // ------------------------------------------------------------------------------
     // COMPONENTS
     
@@ -541,8 +557,10 @@ const sux = ((_s) => {
         return _s.bind({
             event: { 'onchange': e => obj[prop] = (from ? from(e.value) : e.value) },
             to: e => {
-                const val = obj[prop];
-                e.value = (to ? to(val) : (val === null || val === undefined) ? '' : val );
+                let val = obj[prop];
+                if (to) val = to(val);
+                if (val === null || val === undefined) val = '';
+                e.value = val;
             },
         });
     };
