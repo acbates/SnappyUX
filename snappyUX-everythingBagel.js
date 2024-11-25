@@ -25,6 +25,22 @@ const sux = ((_s) => {
         return null;
     };
     
+    // want an easy way to append HTML to an element...
+    HTMLElement.prototype.htmlChildAppend = function(html){
+        let tmp = document.createElement('span');
+        this.appendChild(tmp);
+        tmp.outerHTML = html;
+        sux._runMounts(this);
+    };
+    
+    // want an easy way to append HTML to an element...
+    HTMLElement.prototype.htmlChildBefore = function(html, kid){
+        let tmp = document.createElement('span');
+        this.insertBefore(tmp, kid);
+        tmp.outerHTML = html;
+        sux._runMounts(this);
+    };
+    
     // ------------------------------------------------------------------------------
     // COMPONENTS
     
@@ -541,8 +557,10 @@ const sux = ((_s) => {
         return _s.bind({
             event: { 'onchange': e => obj[prop] = (from ? from(e.value) : e.value) },
             to: e => {
-                const val = obj[prop];
-                e.value = (to ? to(val) : (val === null || val === undefined) ? '' : val );
+                let val = obj[prop];
+                if (to) val = to(val);
+                if (val === null || val === undefined) val = '';
+                e.value = val;
             },
         });
     };
@@ -669,11 +687,9 @@ const sux = ((_s) => {
         const fetchOptions = { method, headers: { ...defaultHeaders, ...headers } };
         
         if (postOrParams) {
-            if (method === 'GET' && postOrParams) {
+            if (method === 'GET') {
                 url = (url.includes('?') ?  '&' : '?') + new URLSearchParams(postOrParams).toString();
-            }
-            
-            if (method === 'POST' && postOrParams) {
+            } else {
                 fetchOptions.body = JSON.stringify(postOrParams);
             }
         }
@@ -688,19 +704,32 @@ const sux = ((_s) => {
     /**
      * Wrapper of the 'http()' function for POST requests.
      */
-    _s.httpPost = async (hostPath, path, post, headers) => {
-        if (!hostPath.endsWith('/') && path) hostPath += '/';
-        let url = hostPath + ( path || '');
-        return _s.http(url, 'POST', post, headers);
-    };
+    _s.httpPost = async (...args) => _s.httpCall('POST', ...args);
     
     /**
      * Wrapper of the 'http()' function for GET requests.
      */
-    _s.httpGet = async (hostPath, path, params, headers) => {
+    _s.httpGet = async (...args) => _s.httpCall('GET', ...args);
+    
+    /**
+     * Wrapper of the 'http()' function for all types of requests, passing in a method.
+     */
+    _s.httpCall = async (method, hostPath, path, params, headers, preflight = (obj => obj)) => {
+        let tmp = preflight({ method, hostPath, path, params, headers });
+        
+        if (tmp && tmp instanceof Promise) tmp = await tmp;
+        
+        if (tmp) {
+            method = tmp.method;
+            hostPath = tmp.hostPath;
+            path = tmp.path;
+            params = tmp.params;
+            headers = tmp.headers;
+        }
+        
         if (!hostPath.endsWith('/') && path) hostPath += '/';
         let url = hostPath + ( path || '');
-        return _s.http(url, 'GET', params, headers);
+        return _s.http(url, method, params, headers);
     };
     
     /**
@@ -725,8 +754,9 @@ const sux = ((_s) => {
             let conf = config[k];
             if (!_s[k]) {
                 _s[k] = {
-                    post: async (path, post, headers) => sux.httpPost(conf.hostPath, path, post, headers),
-                    get: async (path, params, headers) => sux.httpGet(conf.hostPath, path, params, headers)
+                    get: async (path, params, headers) => sux.httpCall('GET', conf.hostPath, path, params, headers, conf.preflight),
+                    post: async (path, post, headers) => sux.httpCall('POST', conf.hostPath, path, post, headers, conf.preflight),
+                    call: async (method, path, post, headers) => sux.httpCall(method, conf.hostPath, path, post, headers, conf.preflight)
                 };
             }
         });
@@ -774,16 +804,19 @@ const sux = ((_s) => {
     /**
      * Loads a stylesheet into the document head.
      */
-    _s.loadStylesheet = (href) => {
-        // if loaded, return, otherwise do the thing
-        if (_s.requestedResources.has(href))  return;
-        _s.requestedResources.set(href, Promise.resolve());
-        
-        // create the link and trigger the load
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = href;
-        document.head.appendChild(link);
+    _s.loadStylesheet = (hrefs) => {
+        if (!Array.isArray(hrefs)) hrefs = [hrefs];
+        for (let href of hrefs) {
+            // if loaded, return, otherwise do the thing
+            if (_s.requestedResources.has(href)) return;
+            _s.requestedResources.set(href, Promise.resolve());
+            
+            // create the link and trigger the load
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            document.head.appendChild(link);
+        }
     };
     
     /**
@@ -793,7 +826,6 @@ const sux = ((_s) => {
         let bundle = _s.bundles[name];
         if (bundle.style) {
             _s.loadStylesheet(bundle.style);
-            
         }
         let source = bundle.source;
         if (!Array.isArray(source)) source = [source];
@@ -877,15 +909,34 @@ const sux = ((_s) => {
         
         if (hash[0] === '#') hash = hash.substring(1);
         
-        let route = _s.routes.find(r => r.route.test(hash));
+        if (hash.includes('?')) hash = hash.split('?')[0];
+        
+        let route = _s.routes.find(r => {
+            if (!Array.isArray(r.route)) return r.route.test(hash);
+            
+            for (let rx of r.route) {
+                if (rx.test(hash)) return true;
+            }
+            return false;
+        });
         
         // reset the 'lastIndex' of all the regexes so they can be used again
         _s.routes.forEach(r => r.route.lastIndex = 0);
         
         if (!route) {
-            console.log('No route found for ' + hash + '!');
+            if (!window.isRetry) {
+                history.back();
+                // wait 50 milliseconds and try again...
+                await new Promise(resolve => setTimeout(resolve, 50));
+                window.isRetry = true;
+                _s.go(hash);
+                
+            } else {
+                console.log('No route found for ' + hash + '!');
+            }
             return;
         }
+        if (window.isRetry) delete window.isRetry;
         _s.say('Routing', hash, route);
     };
     
